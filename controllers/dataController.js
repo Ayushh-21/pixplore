@@ -1,5 +1,6 @@
 const axiosInstance = require("../lib/axios")
-const { validateSearchImageQuery } = require("../validations")
+const { photo, tag } = require("../models")
+const { validateSearchImageQuery, validateTags, validateImageUrl } = require("../validations")
 
 
 const searchImages = async (req, res) => {
@@ -27,12 +28,6 @@ const searchImages = async (req, res) => {
             })
         }
 
-        // const data = response.data.results.map((photo) => ({
-        //     imageUrl: photo.urls.regular,
-        //     description: photo.description || "No description available",
-        //     altDescription: photo.alt_description || "No alternative description available"
-        // }))
-
         res.json({ photos: photos })
     } catch (error) {
         res.status(500).json({
@@ -42,4 +37,45 @@ const searchImages = async (req, res) => {
 }
 
 
-module.exports = { searchImages }
+const savePhoto = async (req, res) => {
+    try {
+        const { imageUrl, description, altDescription, tags, userId } = req.body
+
+        if (!validateImageUrl(imageUrl)) {
+            return res.status(400).json({ message: "Invalid image URL" });
+        }
+
+        const tagValidationError = validateTags(tags)
+        if (tagValidationError) {
+            res.status(400).json({
+                message: tagValidationError
+            })
+        }
+
+        const newPhoto = await photo.create({ imageUrl, description, altDescription, userId })
+
+        if (tags.length > 0 && tags.length <= 5) {
+            for (const newtag of tags) {
+                if (newtag.length < 20) {
+                    await tag.create({
+                        name: newtag,
+                        photoId: newPhoto.id
+                    })
+                }
+            }
+        }
+
+        res.status(200).json({
+            message: 'Photo saved successfully'
+        })
+
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Failed to add new photo"
+        })
+    }
+}
+
+module.exports = { searchImages, savePhoto }
