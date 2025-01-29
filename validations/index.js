@@ -1,3 +1,4 @@
+
 const validateUser = (data) => {
     const { username, email } = data;
     const errors = [];
@@ -15,8 +16,16 @@ const validateUser = (data) => {
         errors.push("Invalid email address");
     }
 
-    return errors; 
+    return errors;
 };
 
+const validateSearchImageQuery = (query) => {
+    const errors = []
+    if (!query.query || typeof query.query !== 'string' ) {
+        errors.push("query is required and should be a string.")
+    }
 
-module.exports = { validateUser }
+    return errors
+}
+
+module.exports = { validateUser, validateSearchImageQuery }
