@@ -47,7 +47,7 @@ const savePhoto = async (req, res) => {
 
         const tagValidationError = validateTags(tags)
         if (tagValidationError) {
-            res.status(400).json({
+            return res.status(400).json({
                 message: tagValidationError
             })
         }
@@ -71,11 +71,62 @@ const savePhoto = async (req, res) => {
 
 
     } catch (error) {
-        console.log(error)
         res.status(500).json({
             message: "Failed to add new photo"
         })
     }
 }
 
-module.exports = { searchImages, savePhoto }
+const addtags = async (req, res) => {
+    try {
+        const { photoId } = req.params
+        const { tags } = req.body;
+
+        const tagValidationError = validateTags(tags)
+        if (tagValidationError) {
+            return res.status(400).json({
+                message: tagValidationError
+            })
+        }
+
+        const image = await photo.findByPk(photoId, {
+            include: { model: tag }
+        })
+
+        if (!image) {
+            return res.status(404).json({ message: "Photo not found" });
+        }
+
+        const existingTags = image.tags.map(t => t.name);
+        const tagsCount = existingTags.length + tags.length;
+
+        if (tagsCount > 5) {
+            res.status(400).json({
+                message: "Each photo can contain max 5 tags"
+            })
+        }
+
+        const newTags = []
+        for (const tagName of tags) {
+            newTags.push({
+                name: tagName,
+                photoId
+            })
+        }
+
+        if (newTags.length > 0) {
+            await tag.bulkCreate(newTags);
+        }
+        return res.json({
+            message: 'Tags added successfully'
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Error while adding tags."
+        })
+    }
+}
+
+module.exports = { searchImages, savePhoto, addtags }
