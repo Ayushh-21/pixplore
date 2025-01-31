@@ -44,4 +44,17 @@ const validateTags = (tags) => {
     return null;
 }
 
-module.exports = { validateUser, validateSearchImageQuery, validateImageUrl, validateTags }
+const validateSearchTags = (tags, sort) => {
+    if (!tags || typeof tags !== "string") {
+        return "Tag is required and should be a string."
+    }
+
+    if (sort && !["ASC", "DESC"].includes(sort.toUpperCase())) {
+        return "Sort must be 'ASC' or 'DESC'."
+    }
+
+    return null
+}
+
+
+module.exports = { validateUser, validateSearchImageQuery, validateImageUrl, validateTags, validateSearchTags }

@@ -1,7 +1,7 @@
 const axiosInstance = require("../lib/axios")
-const { photo, tag } = require("../models")
-const { validateSearchImageQuery, validateTags, validateImageUrl } = require("../validations")
-
+const { photo, tag, searchHistory } = require("../models")
+const { validateSearchImageQuery, validateTags, validateImageUrl, validateSearchTags } = require("../validations")
+const { Op } = require("sequelize");
 
 const searchImages = async (req, res) => {
     const errors = validateSearchImageQuery(req.query)
@@ -129,4 +129,59 @@ const addtags = async (req, res) => {
     }
 }
 
-module.exports = { searchImages, savePhoto, addtags }
+const searchPhotosByTags = async (req, res) => {
+    try {
+        const { tags, sort = "ASC", userId } = req.query
+
+        const validateTagsAndSort = validateSearchTags(tags, sort)
+        if (validateTagsAndSort) {
+            return res.status(400).json({
+                message: validateTagsAndSort
+            })
+        }
+
+        await searchHistory.create({
+            userId,
+            query: tags
+        })
+
+        const tagsExists = await tag.findAll({
+            where: { name: tags }
+        })
+
+        let photoIds = tagsExists.map(tag => tag.photoId);
+        if (photoIds.length === 0) {
+            return res.status(400).json({ message: "No photos found with this tag." });
+        }
+
+        const existingPhoto = await photo.findAll({
+            where: { id: { [Op.in]: photoIds } },
+            order: [["dateSaved", sort]],
+            attributes: ["imageUrl", "description", "dateSaved"],
+
+            include: [
+                {
+                    model: tag,
+                    attributes: ["name"],
+                }
+            ]
+        })
+
+        if (!existingPhoto) return res.status(400).json({
+            message: "No photos found."
+        })
+
+        res.status(200).json({
+            photos: existingPhoto
+        })
+
+
+    } catch (error) {
+        console.log("error fetching photod", error)
+        res.status(500).json({
+            message: "Error while fetching photos by tags."
+        })
+    }
+}
+
+module.exports = { searchImages, savePhoto, addtags, searchPhotosByTags }
