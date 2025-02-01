@@ -3,7 +3,7 @@ const cors = require('cors')
 require('dotenv').config()
 const { sequelize } = require('./models')
 const { createUser } = require('./controllers/userController')
-const { searchImages, savePhoto, addtags, searchPhotosByTags } = require('./controllers/dataController')
+const { searchImages, savePhoto, addtags, searchPhotosByTags, getSearchHistory } = require('./controllers/dataController')
 
 
 const app = express()
@@ -16,6 +16,7 @@ app.post('/api/photos', savePhoto)
 app.post('/api/photos/:photoId/tags', addtags)
 app.get('/api/search/photos', searchImages)
 app.get('/api/photos/tag/search', searchPhotosByTags)
+app.get('/api/search-history', getSearchHistory)
 
 
 sequelize

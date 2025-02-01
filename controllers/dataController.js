@@ -1,7 +1,7 @@
 const axiosInstance = require("../lib/axios")
-const { photo, tag, searchHistory } = require("../models")
+const { photo, tag, searchHistory, user } = require("../models")
 const { validateSearchImageQuery, validateTags, validateImageUrl, validateSearchTags } = require("../validations")
-const { Op } = require("sequelize");
+const { Op, where, HSTORE } = require("sequelize");
 
 const searchImages = async (req, res) => {
     const errors = validateSearchImageQuery(req.query)
@@ -175,7 +175,6 @@ const searchPhotosByTags = async (req, res) => {
             photos: existingPhoto
         })
 
-
     } catch (error) {
         console.log("error fetching photod", error)
         res.status(500).json({
@@ -184,4 +183,35 @@ const searchPhotosByTags = async (req, res) => {
     }
 }
 
-module.exports = { searchImages, savePhoto, addtags, searchPhotosByTags }
+const getSearchHistory = async (req, res) => {
+    try {
+        const { userId } = req.query
+
+        if (!userId) {
+            return res.status(400).json({
+                message: "userId is required."
+            })
+        }
+
+        const userExist = await user.findByPk(userId)
+        if (!userExist) {
+            return res.status(400).json({
+                message: `No user found with this ${userId} id.`
+            })
+        }
+
+        const getHistory = await searchHistory.findAll({
+            where: { userId },
+            attributes: ['query', 'timestamp'],
+            raw: true
+        })
+
+        return res.json({ searchHistory: getHistory });
+
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { searchImages, savePhoto, addtags, searchPhotosByTags, getSearchHistory }
