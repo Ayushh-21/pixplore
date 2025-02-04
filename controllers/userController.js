@@ -6,7 +6,7 @@ const { validateUser } = require("../validations")
 const createUser = async (req, res) => {
     try {
         const { username, email } = req.body
-        const validateErrors = validateUser(req.body)
+        const validateErrors = validateUser(username, email)
 
         if (validateErrors.length > 0) {
             return res.status(400).json({

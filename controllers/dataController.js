@@ -1,7 +1,7 @@
 const axiosInstance = require("../lib/axios")
 const { photo, tag, searchHistory, user } = require("../models")
 const { validateSearchImageQuery, validateTags, validateImageUrl, validateSearchTags } = require("../validations")
-const { Op, where, HSTORE } = require("sequelize");
+const { Op } = require("sequelize");
 
 const searchImages = async (req, res) => {
     const errors = validateSearchImageQuery(req.query)
@@ -140,11 +140,6 @@ const searchPhotosByTags = async (req, res) => {
             })
         }
 
-        await searchHistory.create({
-            userId,
-            query: tags
-        })
-
         const tagsExists = await tag.findAll({
             where: { name: tags }
         })
@@ -152,6 +147,13 @@ const searchPhotosByTags = async (req, res) => {
         let photoIds = tagsExists.map(tag => tag.photoId);
         if (photoIds.length === 0) {
             return res.status(400).json({ message: "No photos found with this tag." });
+        }
+
+        if (tagsExists) {
+             await searchHistory.create({
+            userId,
+            query: tags
+        })
         }
 
         const existingPhoto = await photo.findAll({

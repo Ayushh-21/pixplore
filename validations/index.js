@@ -1,6 +1,6 @@
 
-const validateUser = (data) => {
-    const { username, email } = data;
+const validateUser = (username, email) => {
+    
     const errors = [];
 
     if (!username || typeof username !== 'string') {
